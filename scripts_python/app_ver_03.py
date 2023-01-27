@@ -3,14 +3,14 @@ from tkinter import *
 from tkinter import ttk                                            # se importa para tener tabs
 import psycopg2                                                    # permite conectarse a la base de datos y modificarla       
 from funciones import *                                            # se importan las funciones de queries
-
+from pdf_crear import *
 
 # credenciales para conectarse a la base
-host_v = 'localhost' 
+host_v = '10.56.102.135' # credenciales para conectarse a la base
 port_v = '5432'
-database_v = 'bodega_db'
+database_v = 'postgres'
 user_v = 'postgres'
-password_v = 'SuperBodega'
+password_v = 'B2023Psb'
 
 
 def main(usuario_id):
@@ -2722,6 +2722,55 @@ def main(usuario_id):
         except:
             pass
 
+    def crear_documento():
+        # se consiguen las entregas con los filtros
+        entregas =  ver_entregas(entry_usuario_id_filtro_entrega_output_2.get(), entry_empleado_id_filtro_entrega_output_2.get(), entry_epp_id_filtro_entrega_output_2.get(), options_bodega_filtro_entrega_2.get(), label_antes_filtro_entrega_output_2.get(), label_despues_filtro_entrega_output_2.get(), options_orden_entrega_2.get(), cur, conn) 
+
+        lista_datos = []  # lista vacía la inicio
+
+        # para cada entrega
+        for entrega in entregas:
+            bodega = entrega[7] # se guarda la bodega
+            id_epp = entrega[2] # se guarda el id del epp
+
+            epp_params = ver_epp_id(id_epp,cur,conn) # para más info del epp
+
+            id_epp = str(id_epp)
+
+            nombre_epp = epp_params[2]  # nombre del epp
+            talla_epp = epp_params[4]   # talla del epp
+
+            cantidad_retirada = entrega[4]  # cantidad de epp retirado/devuelto
+            cantidad_retirada = str(cantidad_retirada)
+            fecha_y_hora = entrega[6]   # fecha y hora
+            fecha_y_hora = str(fecha_y_hora)
+
+            datos = [bodega,id_epp,nombre_epp,talla_epp,cantidad_retirada,fecha_y_hora]
+
+            lista_datos.append(datos)   # se guarda en la lista
+    
+        fecha_actual = tiempo_actual(cur,conn)
+
+        usuario = ver_empleado_id(usuario_id,cur,conn)
+        nombre_usuario = usuario[1]
+
+        empleado = ver_empleado_id(entry_empleado_id_filtro_entrega_output_2.get(),cur,conn)
+        id_empleado = empleado[0]
+        nombre_empleado = empleado[1]
+
+
+
+        crearPdf(2002,lista_datos,fecha_actual,usuario_id,nombre_usuario,id_empleado,nombre_empleado)
+
+
+
+
+
+
+
+
+
+
 
     # info usuarios
 
@@ -2889,6 +2938,16 @@ def main(usuario_id):
     boton_filtrar_entrega_2 = Button(buscar_entregas, text='Filtrar', command=filtrar_entrega_2)    # botón para relizar la busqueda
     boton_filtrar_entrega_2.grid(row =1, column=5)
 
+    # botón crear documento
+
+    boton_pdf_entrega_2 = Button(buscar_entregas, text='Crear documento', command=crear_documento)  # botón para crear documento
+    boton_pdf_entrega_2.grid(row=2, column=5)
+
+    # status documento
+
+    label_documento_status = Label(buscar_entregas, text='')
+    label_documento_status.grid(row=3, column=5)
+
     # id empleado
 
     label_empleado_id_filtro_entrega_2 = Label(buscar_entregas, text='ID Empleado:')
@@ -2983,7 +3042,7 @@ def main(usuario_id):
         listbox_entregas_2.delete(0,END)
 
 
-
+    # entrega rápida
 
 
     root.mainloop()
@@ -3056,6 +3115,6 @@ def login():
     root_login.mainloop()
 
 
-#login()
+login()
 
-main(21007272)
+#main(21007272)

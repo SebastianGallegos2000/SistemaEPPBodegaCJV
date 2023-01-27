@@ -897,6 +897,19 @@ def ver_todas_las_entregas_func(cur,conn):
         conn.rollback() # se hace rollback para abortar la transacción
         return None
 
+def tiempo_actual(cur,conn):
+    try:
+        # se consigue el tiempo actual
+        sql_timestamp = '''     
+                            SELECT now()::timestamp(0);
+                        '''
+        cur.execute(sql_timestamp)          # se ejecuta la consulta
+        return (cur.fetchone())[0]    # se guarda la fecha y hora  
+    except:
+        conn.rollback() # rollback si falla
+        return None
+
+
 def hacer_entrega(id_usuario,id_empleado,id_epp,cantidad,bodega,razon,cur,conn):                  # función para hacer una retiro de ep
     try:
         if(type(id_usuario) == str):
@@ -1041,7 +1054,17 @@ def ver_entregas(id_usuario,id_empleado,id_epp,bodega,antes_de,depues_de,orden, 
         conn.rollback()
         return None    
 
-    
-    
+def vale_de_salida(cur,conn):
+    try:
+        # se consigue el "serial" de vale de salida
+        sql_vale_de_salida = '''     
+                            SELECT now()::timestamp(0);
+                            '''
+        cur.execute(sql_vale_de_salida)          # se ejecuta la consulta
+        return (cur.fetchone())[0]    # se guarda la fecha y hora  
+    except:
+        conn.rollback() # rollback si falla
+        return None
+
 
 
