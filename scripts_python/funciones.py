@@ -334,6 +334,24 @@ def eliminar_empleado_func(id,cur,conn):
     id = id[0]
     
     try:
+        # se eliminan las entregas relacionadas
+        sql_eliminar_entregas = '''
+                            DELETE FROM entrega
+                            WHERE id_empleado = %s
+                            OR id_usuario = %s
+                        '''
+
+        cur.execute(sql_eliminar_entregas,[id,id])
+
+        # se eliminan los usuarios relacionados
+        sql_eliminar_usuario = '''
+                            DELETE FROM usuario
+                            WHERE id = %s
+                        '''
+        
+        cur.execute(sql_eliminar_usuario,[id])
+
+        # se elimina el empleado 
         sql_eliminar = '''
                         DELETE FROM empleado
                         WHERE id = %s
@@ -350,7 +368,7 @@ def ver_todos_los_epp_func(cur,conn):
             sql_ver_empleados = '''
                                 SELECT *
                                 FROM epp
-                                ORDER BY codigo_producto DESC;
+                                ORDER BY codigo_producto ASC;
                             '''  
             cur.execute(sql_ver_empleados)  # se ejecuta la consulta
             return cur.fetchall()           # y se retornan todos los resultados
@@ -496,6 +514,23 @@ def modificar_epp_func(id,c_constructor,nombre,constructor_designado,talla,unida
    
 def eliminar_epp_func(id,cur,conn):
     try:
+        # se eliminan las entregas relacionadas
+        sql_eliminar_entregas = '''
+                        DELETE FROM entrega
+                        WHERE id_epp = %s
+                    '''
+        
+        cur.execute(sql_eliminar_entregas,[id])
+
+        # se eliminan los registros de stock relacionados
+        sql_eliminar_registros = '''
+                        DELETE FROM stock 
+                        WHERE codigo_epp = %s
+                    ''' 
+
+        cur.execute(sql_eliminar_registros,[id])
+
+        # se elimina el epp
         sql_eliminar = '''
                         DELETE FROM epp
                         WHERE codigo_producto = %s
@@ -538,6 +573,23 @@ def annadir_bodega_func(nombre,cur,conn):
 
 def eliminar_bodega_func(nombre,cur,conn):
     try:
+        # se eliminan las entregas relacionadas
+        sql_eliminar_entregas = '''
+                        DELETE FROM entrega
+                        WHERE bodega = %s
+                    '''
+
+        cur.execute(sql_eliminar_entregas,[nombre])
+
+        # se eliminan los registros de stock relacionados
+        sql_eliminar_registros = '''
+                        DELETE FROM stock 
+                        WHERE bodega = %s
+                    '''
+
+        cur.execute(sql_eliminar_registros,[nombre])
+
+        # se elimina la bodega 
         sql_eliminar = '''
                         DELETE FROM bodega
                         WHERE nombre = %s
@@ -700,6 +752,15 @@ def eliminar_usuario_func(id,cur,conn):
     id = id[0]
     
     try:
+        # se eliminan las entregas que tengan al usuario
+        sql_eliminar_entregas = '''
+                        DELETE FROM entrega
+                        WHERE id_usuario = %s
+                    '''
+        
+        cur.execute(sql_eliminar_entregas,[id])
+
+        # se elimina al usuario
         sql_eliminar = '''
                         DELETE FROM usuario
                         WHERE id = %s
@@ -807,7 +868,7 @@ def annadir_registro_stock_func(id,bodega,cantidad,cantidad_critica,cur,conn):
         conn.rollback() # se hace rollback para abortar la transacción
         return -1   # y se retorna -1    
 
-def modificar_stock_epp(id,cantidad,bodega,cur,conn):
+def modificar_stock_epp(id,cantidad,bodega,cur,conn,commit):
         try:                                # dentro de un try por si algo falla 
             # se hace la inserción
             sql_cambiar_cantidad_epp = '''    
@@ -820,7 +881,8 @@ def modificar_stock_epp(id,cantidad,bodega,cur,conn):
                 cantidad = int(cantidad)
             if(cantidad>=0):            # la cantidad de stock no puede ser menor a 0 
                 cur.execute(sql_cambiar_cantidad_epp,[cantidad,id,bodega])
-                conn.commit()
+                if(commit):
+                    conn.commit()
                 return 1
             else:
                 return 0    # no se puede tener menos de 0 en stock 
@@ -828,9 +890,9 @@ def modificar_stock_epp(id,cantidad,bodega,cur,conn):
             conn.rollback()
             return -1
 
-def sumar_restar_epp(id,cantidad,bodega,cur,conn):       # cantidad postiva o negativa
+def sumar_restar_epp(id,cantidad,bodega,cur,conn,commit):       # cantidad postiva o negativa
     cantidad_nueva = get_stock_id(id,bodega,cur,conn)[0]+cantidad
-    return modificar_stock_epp(id,cantidad_nueva,bodega,cur,conn)
+    return modificar_stock_epp(id,cantidad_nueva,bodega,cur,conn,commit)
 
 def modificar_stock_critico(id, cantidad, bodega, cur, conn):   # modifica cantidad crítica
         try:                                # dentro de un try por si algo falla 
@@ -909,8 +971,7 @@ def tiempo_actual(cur,conn):
         conn.rollback() # rollback si falla
         return None
 
-
-def hacer_entrega(id_usuario,id_empleado,id_epp,cantidad,bodega,razon,cur,conn):                  # función para hacer una retiro de ep
+def hacer_entrega(id_usuario,id_empleado,id_epp,cantidad,bodega,razon,cur,conn, commit):                  # función para hacer una retiro de epp
     try:
         if(type(id_usuario) == str):
             id_usuario = id_usuario.split('-')
@@ -957,7 +1018,8 @@ def hacer_entrega(id_usuario,id_empleado,id_epp,cantidad,bodega,razon,cur,conn):
         else:
             cur.execute(sql_insertar, [id_usuario, id_empleado, id_epp, precio, cantidad, precio_total, fecha_hora, bodega])
 
-        conn.commit()   # se le hacen commit a los cambios
+        if(commit):
+            conn.commit()   # se le hacen commit a los cambios
         return 1
     except:
         conn.rollback()
@@ -1058,10 +1120,21 @@ def vale_de_salida(cur,conn):
     try:
         # se consigue el "serial" de vale de salida
         sql_vale_de_salida = '''     
-                            SELECT now()::timestamp(0);
+                            SELECT numero
+                            FROM pdf 
+                            WHERE name = 'vale de salida'
                             '''
         cur.execute(sql_vale_de_salida)          # se ejecuta la consulta
-        return (cur.fetchone())[0]    # se guarda la fecha y hora  
+        numero_vale = cur.fetchone()[0]
+
+        sql_aumentar_vale_de_salida = '''
+                            UPDATE pdf
+                            SET numero = %s
+                            WHERE name = 'vale de salida'
+                        '''
+        cur.execute(sql_aumentar_vale_de_salida,[numero_vale+1])
+        conn.commit()
+        return numero_vale    # se guarda la fecha y hora  
     except:
         conn.rollback() # rollback si falla
         return None

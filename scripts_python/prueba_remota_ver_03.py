@@ -6,11 +6,11 @@ from funciones import *                                            # se importan
 from pdf_crear import *
 
 # credenciales para conectarse a la base
-host_v = 'localhost' # credenciales para conectarse a la base
+host_v = '10.56.102.135' # credenciales para conectarse a la base
 port_v = '5432'
-database_v = 'bodega_db'
+database_v = 'postgres'
 user_v = 'postgres'
-password_v = 'SuperBodega' 
+password_v = 'B2023Psb'
 
 
 def main(usuario_id,permisos_id):

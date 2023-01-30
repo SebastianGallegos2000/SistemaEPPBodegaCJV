@@ -70,7 +70,6 @@ def crearPdf(identificadorPdf,lista_datos,fecha,rut_bodeguero,nombre_bodeguero,r
     pdf.cell(w=5.5,h=2,txt='__________________________________',border=1,align='C',fill=0)
 
     pdf.output('C:\ReportesValesDeSalida\Vale_Salida_No.%s.pdf'%identificadorPdf,'D') #Aqui va la ruta de donde queremos que se almacene el archivo creado.
-    identificadorPdf+=1
             
 
 
