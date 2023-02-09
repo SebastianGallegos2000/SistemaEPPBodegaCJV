@@ -54,6 +54,7 @@ def main(usuario_id,permisos_usuario):
     frame_stock = Frame(tabs,bg='white')       # frame para ver info del stock
     frame_usuarios = Frame(tabs,bg='white')  # frame para ver info de los usuarios
     frame_entregas = Frame(tabs,bg='white')    # frame para ver info de las entregas
+    frame_exportar = Frame(tabs,bg='white')
 
     # se añaden los frames a sus tabs corresponidentes 
     if permisos_usuario=='BODEGUERO':
@@ -71,6 +72,7 @@ def main(usuario_id,permisos_usuario):
         tabs.add(frame_usuarios, text='Usuarios')
         tabs.add(frame_stock, text='Stock')
         tabs.add(frame_entregas, text='Entregas')
+        tabs.add(frame_exportar,text='Exportar Excel')
         pass
     elif permisos_usuario=='ADMIN BODEGUERO':
         tabs.add(frame_escaneo,text='Escaneo')
@@ -3237,8 +3239,7 @@ def main(usuario_id,permisos_usuario):
         ver_stocks_entrega_3(options_bodega_input_entrega_3.get())
 
     entrega_rapida = Frame(tabs_entrega,bg='white')    # se crea y se le da como padre las tabs de entregas
-    tabs_entrega.add(entrega_rapida, text='Entrega rápida')
-
+    tabs_entrega.add(entrega_rapida,text='Entrega rápida')
     # id empleado
 
     label_empleado_id_entrega_3 = Label(entrega_rapida, text = 'ID empleado:',bg='white')  # id del empleado
@@ -3300,6 +3301,7 @@ def main(usuario_id,permisos_usuario):
             listbox_entregas_3.insert(END, lista)       # se rellena la lista 
 
     ver_stocks_entrega_3('BODEGA CENTRAL')  # siempre se inicia con la bodega central
+
     
     def seleccionados_entrega_3():
         filas = listbox_entregas_3.curselection()   # filas seleccionadas
@@ -3371,7 +3373,52 @@ def main(usuario_id,permisos_usuario):
 
     label_status_transaccion_entrega_3 = Label(entrega_rapida, text='',bg='white')
     label_status_transaccion_entrega_3.grid(row=3,column=1)
+
+    #tabs exportar/////////////////
+    tabs_exportar = ttk.Notebook(frame_exportar)
+    tabs_exportar.pack()
+
+    #frame para exportar en excel///////////
+    exportar_excel = Frame(tabs_exportar)
+    tabs_exportar.add(exportar_excel,text='Excel')
+
+    label_epp_id_exportar = Label(exportar_excel,text='ID EPP') #id del epp
+    label_epp_id_exportar.grid(row=0,column=0)
+
+    entry_epp_exportar = Entry(exportar_excel) #entry para el id del epp
+    entry_epp_exportar.grid(row=1,column=0)
+
+    check_precio = Checkbutton(exportar_excel,text='Mostrar precio') #check para mostrar precio
+    check_precio.grid(row=3,column=0)
+
+    boton_filtrar_excel_exportar = Button(exportar_excel,text='Filtrar') #boton para filtrar
+    boton_filtrar_excel_exportar.grid(row=4,column=0)
+
+    label_filtrar_text_exportar = Label(exportar_excel,text='Filtros:')
+    label_filtrar_text_exportar.grid(row=0,column=2)
+
+    label_desde_text_exportar = Label(exportar_excel,text='Desde:')
+    label_desde_text_exportar.grid(row=1,column=2)
  
+    entry_desde_exportar = Entry(exportar_excel) #entry fecha desde
+    entry_desde_exportar.grid(row=1,column=3)
+
+    label_hasta_text_exportar = Label(exportar_excel,text='Desde:')
+    label_hasta_text_exportar.grid(row=2,column=2)
+
+    entry_hasta_exportar = Entry(exportar_excel) #entry fecha hasta
+    entry_hasta_exportar.grid(row=2,column=3)
+
+    listbox_epp_exportar = Listbox(exportar_excel, width=180, height=30, selectmode=EXTENDED)
+    listbox_epp_exportar.grid(row=19,columnspan=14,sticky=W+E)
+
+    boton_crear_excel_exportar = Button(exportar_excel,text='Crear Excel')
+    boton_crear_excel_exportar.grid(row=20,column=0)
+
+    for entrega in entregas:
+        listbox_epp_exportar.insert(END,entrega)
+
+
     root.mainloop()
 
     cur.close()
