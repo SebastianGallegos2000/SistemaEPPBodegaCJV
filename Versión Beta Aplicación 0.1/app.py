@@ -4,6 +4,7 @@ from tkinter import ttk                                            # se importa 
 import psycopg2                                                    # permite conectarse a la base de datos y modificarla       
 from funciones import *                                            # se importan las funciones de queries
 from pdf_crear import *
+from tkinter import filedialog
 
 # credenciales para conectarse a la base
 host_v = '10.56.102.135' # credenciales para conectarse a la base
@@ -52,9 +53,10 @@ def main(usuario_id,permisos_usuario):
     frame_epp = Frame(tabs,bg='white')         # frame para ver info de los epp
     frame_bodega = Frame(tabs,bg='white')      # frame para ver info de las bodegas
     frame_stock = Frame(tabs,bg='white')       # frame para ver info del stock
-    frame_usuarios = Frame(tabs,bg='white')  # frame para ver info de los usuarios
+    frame_usuarios = Frame(tabs,bg='white')    # frame para ver info de los usuarios
     frame_entregas = Frame(tabs,bg='white')    # frame para ver info de las entregas
-    frame_exportar = Frame(tabs,bg='white')
+    frame_exportar = Frame(tabs,bg='white')    # frame para ver info de exportar excel
+    frame_importar = Frame(tabs,bg='white')    # frame para ver info de importar excel
 
     # se añaden los frames a sus tabs corresponidentes 
     if permisos_usuario=='BODEGUERO':
@@ -63,6 +65,8 @@ def main(usuario_id,permisos_usuario):
         tabs.add(frame_epp, text='EPP')
         tabs.add(frame_stock, text='Stock')
         tabs.add(frame_entregas, text='Entregas')
+        tabs.add(frame_importar,text='Importar Excel')
+
         pass
     elif permisos_usuario=='ADMIN TI':
         tabs.add(frame_escaneo,text='Escaneo')
@@ -73,6 +77,7 @@ def main(usuario_id,permisos_usuario):
         tabs.add(frame_stock, text='Stock')
         tabs.add(frame_entregas, text='Entregas')
         tabs.add(frame_exportar,text='Exportar Excel')
+        tabs.add(frame_importar,text='Importar Excel')
         pass
     elif permisos_usuario=='ADMIN BODEGUERO':
         tabs.add(frame_escaneo,text='Escaneo')
@@ -81,6 +86,8 @@ def main(usuario_id,permisos_usuario):
         tabs.add(frame_bodega, text='Bodega')
         tabs.add(frame_stock, text='Stock')
         tabs.add(frame_entregas, text='Entregas')
+        tabs.add(frame_importar,text='Importar Excel')
+
 
 
     # tabs escaneo /////////////////////////////////////////
@@ -3240,6 +3247,7 @@ def main(usuario_id,permisos_usuario):
 
     entrega_rapida = Frame(tabs_entrega,bg='white')    # se crea y se le da como padre las tabs de entregas
     tabs_entrega.add(entrega_rapida,text='Entrega rápida')
+   
     # id empleado
 
     label_empleado_id_entrega_3 = Label(entrega_rapida, text = 'ID empleado:',bg='white')  # id del empleado
@@ -3301,7 +3309,6 @@ def main(usuario_id,permisos_usuario):
             listbox_entregas_3.insert(END, lista)       # se rellena la lista 
 
     ver_stocks_entrega_3('BODEGA CENTRAL')  # siempre se inicia con la bodega central
-
     
     def seleccionados_entrega_3():
         filas = listbox_entregas_3.curselection()   # filas seleccionadas
@@ -3367,7 +3374,6 @@ def main(usuario_id,permisos_usuario):
 
         ver_stocks_entrega_3(options_bodega_input_entrega_3.get())  # se actualiza en la interfaz visual
         
-
     boton_entregas_3 = Button(entrega_rapida,text='Realizar transacción',command=seleccionados_entrega_3,bg='white')   # botón para realizar transacción
     boton_entregas_3.grid(row=3,column=0)
 
@@ -3403,7 +3409,7 @@ def main(usuario_id,permisos_usuario):
     entry_desde_exportar = Entry(exportar_excel) #entry fecha desde
     entry_desde_exportar.grid(row=1,column=3)
 
-    label_hasta_text_exportar = Label(exportar_excel,text='Desde:')
+    label_hasta_text_exportar = Label(exportar_excel,text='Hasta:')
     label_hasta_text_exportar.grid(row=2,column=2)
 
     entry_hasta_exportar = Entry(exportar_excel) #entry fecha hasta
@@ -3412,11 +3418,74 @@ def main(usuario_id,permisos_usuario):
     listbox_epp_exportar = Listbox(exportar_excel, width=180, height=30, selectmode=EXTENDED)
     listbox_epp_exportar.grid(row=19,columnspan=14,sticky=W+E)
 
-    boton_crear_excel_exportar = Button(exportar_excel,text='Crear Excel')
+
+
+    entregas_exportar = ver_entregas_exportar_func(cur,conn)
+    for entrega in entregas_exportar:
+        listbox_epp_exportar.insert(END,entrega)
+
+    def crear_excel():
+        entregas_exportar = ver_entregas_exportar_func(cur,conn)
+
+        lista_datos = []
+
+        try:
+            for entrega in entregas_exportar:
+                bodega = entrega[0]
+                id_epp = entrega[1]
+                nombre_epp = entrega[2]
+                cantidad = entrega[3]
+                precio = entrega[4]
+
+                datos = [bodega,id_epp,nombre_epp,cantidad,precio]
+                lista_datos.append(datos)
+        except:
+            pass
+        res = 1
+        try:
+            crear_excel(lista_datos)
+        except FileNotFoundError:
+            res = -2
+        except UnboundLocalError:
+            res = -3
+        except:
+            return -1
+
+        if (res == 1):
+            print("El Excel se creó con éxito")
+        elif(res== -2):
+            print("No se encontró la carpeta")
+        elif(res == -3):
+            print("a")
+        else:
+            print("Error inesperado")
+
+    boton_crear_excel_exportar = Button(exportar_excel,text='Crear Excel',command=crear_excel)
     boton_crear_excel_exportar.grid(row=20,column=0)
 
-    for entrega in entregas:
-        listbox_epp_exportar.insert(END,entrega)
+    # tabs para importar archivo excel ///////////////////
+    tabs_importar = ttk.Notebook(frame_importar)
+    tabs_importar.pack()
+
+    # frame para importar archivo excel //////////////////
+    importar_excel = Frame(tabs_importar)
+    tabs_importar.add(importar_excel,text='Importar')
+
+    def buscar_archivo():
+        filename = filedialog.askopenfilename(initialdir="/",title="Selecciona archivo")
+        
+
+    boton_explorador_excel_importar = Button(tabs_importar,text='Importar Archivo',height=2,width=70,command=buscar_archivo)
+    boton_explorador_excel_importar.grid(row=1,column=2)
+
+    listbox_importar = Listbox(tabs_importar,width=180,height=30)
+    listbox_importar.grid(row=2,column=2,sticky= W+E)
+
+    boton_guardar_excel_importar = Button(tabs_importar,text="Guardar datos")
+    boton_guardar_excel_importar.grid(row=3,column=2)
+
+    #for entrega in importar:
+    #   listbox_importar.insert(END,entrega)
 
 
     root.mainloop()
