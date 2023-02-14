@@ -959,6 +959,31 @@ def ver_todas_las_entregas_func(cur,conn):
         conn.rollback() # se hace rollback para abortar la transacción
         return None
 
+def ver_entregas_exportar_func(cur,conn): #permite ver las transacciones de las epp en el sistema
+    try:                                  #dentro de un try por si algo falla
+        #se hace la consulta
+        sql_ver_entregas = '''
+                            SELECT entrega.bodega
+                            ,entrega.id_epp
+                            ,epp.nombre
+                            ,entrega.precio_en_transaccion
+                            ,SUM(entrega.cantidad) AS cantidad
+                            ,SUM(entrega.precio_total) AS precio
+                            FROM entrega,epp
+                            WHERE entrega.id_epp = epp.codigo_producto
+                            GROUP BY entrega.bodega
+                            ,entrega.id_epp
+                            ,epp.nombre
+                            ,entrega.precio_en_transaccion
+                            
+                        '''
+        cur.execute(sql_ver_entregas)
+        return cur.fetchall()
+    except:
+        conn.rollback()
+        return None
+
+
 def tiempo_actual(cur,conn):
     try:
         # se consigue el tiempo actual
@@ -1115,6 +1140,8 @@ def ver_entregas(id_usuario,id_empleado,id_epp,bodega,antes_de,depues_de,orden, 
     except:     # quizá poner un conn.rollback()
         conn.rollback()
         return None    
+
+     
 
 def vale_de_salida(cur,conn):
     try:
